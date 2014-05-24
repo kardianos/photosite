@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Photo Site - Groups</title>
+</head>
+<body>
+	<h1>Groups</h1>
+	<ul>
+		{{range .Groups}}
+		<li><a href="/u/{{.}}/">{{.}}</a></li>
+		{{else}}
+		<li>No Groups</li>
+		{{end}}
+	</ul>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Photo Site - {{.Album}} Images</title>
+	
+	<style>
+		p.description {
+			display: inline-block;
+			max-width: 600px;
+		}
+		.item {
+		}
+	</style>
+	
+	<script type="text/javascript" src="/lib/masonry.pkgd.min.js"></script>
+</head>
+<body>
+	<a href="..">Back to group</a><br>
+	<h1>{{.Album}}</h1>
+	<h2>{{.Title}}</h2>
+	<p class="description">
+		{{.Desc}}
+	</p>
+	<div id="container">
+		{{range .Images}}
+		<div class="item"><a href="1280/{{.}}"><img src="200/{{.}}"></a></div>
+		{{else}}
+		<b>No Images</b>
+		{{end}}
+	</div>
+	
+	<script>
+window.onload = function() {
+	var container = document.querySelector('#container');
+	var msnry = new Masonry( container, {
+	  itemSelector: '.item',
+	  columnWidth: 50
+	});
+};
+	</script>
+</body>
+</html>

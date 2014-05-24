@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Photo Site - {{.Group}} Albums</title>
+</head>
+<body>
+	<a href="/">Back to group list</a><br>
+	<h1>{{.Group}}</h1>
+	<ul>
+		{{range .Albums}}
+		<li><a href="{{.}}/">{{.}}</a></li>
+		{{else}}
+		<li>No Albums</li>
+		{{end}}
+	</ul>
+</body>
+</html>
