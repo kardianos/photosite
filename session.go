@@ -7,24 +7,32 @@ import (
 	"time"
 )
 
+type Session interface {
+	HasKey(key string) (username string, err error)
+	Insert(username string) (key string, err error)
+	Delete(username string) (err error)
+	ExpireBefore(update time.Time, create time.Time) (err error)
+	Close() error
+}
+
 type sessionItem struct {
 	username string
 	update   time.Time
 	create   time.Time
 }
 
-type SessionList struct {
+type MemorySessionList struct {
 	sync.Mutex
 	list map[string]*sessionItem
 }
 
-func NewSessionList(persistPath string) *SessionList {
-	return &SessionList{
+func NewMemorySessionList() Session {
+	return &MemorySessionList{
 		list: make(map[string]*sessionItem, 10),
 	}
 }
 
-func (s *SessionList) HasKey(key string) (username string, err error) {
+func (s *MemorySessionList) HasKey(key string) (username string, err error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -36,7 +44,7 @@ func (s *SessionList) HasKey(key string) (username string, err error) {
 
 	return item.username, nil
 }
-func (s *SessionList) Insert(username string) (key string, err error) {
+func (s *MemorySessionList) Insert(username string) (key string, err error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -57,7 +65,7 @@ func (s *SessionList) Insert(username string) (key string, err error) {
 
 	return key, nil
 }
-func (s *SessionList) Delete(username string) (err error) {
+func (s *MemorySessionList) Delete(username string) (err error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -73,7 +81,7 @@ func (s *SessionList) Delete(username string) (err error) {
 
 	return nil
 }
-func (s *SessionList) ExpireBefore(update time.Time, create time.Time) (err error) {
+func (s *MemorySessionList) ExpireBefore(update time.Time, create time.Time) (err error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -87,5 +95,8 @@ func (s *SessionList) ExpireBefore(update time.Time, create time.Time) (err erro
 		delete(s.list, k)
 	}
 
+	return nil
+}
+func (s *MemorySessionList) Close() error {
 	return nil
 }

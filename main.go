@@ -84,6 +84,16 @@ func main() {
 		Authorized:   setupAuthRouter(),
 		Unauthorized: setupUnauthRouter(),
 	}
+	var err error
+
+	sessions, err = NewDiskSessionList("sessions.bolt")
+	if err != nil {
+		log.Fatalf("Failed to start disk sessions: %v", err)
+	}
+	defer sessions.Close()
+
+	go startExpire()
+	loadTemplates()
 
 	usersFile := filepath.Join(*root, ".users")
 	sampleUsers := &UserList{

@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var sessions = NewSessionList("sessions.bolt")
+var sessions Session
 
 type AuthHandler struct {
 	Authorized   http.Handler
@@ -70,10 +70,6 @@ func (auth *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Groups:         groups,
 	}
 	auth.Authorized.ServeHTTP(c, r)
-}
-
-func init() {
-	go startExpire()
 }
 
 func startExpire() {
