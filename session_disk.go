@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -24,6 +25,9 @@ func (i *diskSessionItem) String() string {
 
 type DiskSessionList struct {
 	db *bolt.DB
+
+	sync.Mutex
+	updates map[string]time.Time
 }
 
 var (
@@ -75,7 +79,8 @@ func NewDiskSessionList(persistPath string) (Session, error) {
 		return nil, err
 	}
 	return &DiskSessionList{
-		db: db,
+		db:      db,
+		updates: make(map[string]time.Time, 10),
 	}, nil
 }
 
@@ -84,7 +89,7 @@ func (s *DiskSessionList) HasKey(key string) (username string, err error) {
 	if err != nil {
 		return "", err
 	}
-	tx, err := s.db.Begin(true)
+	tx, err := s.db.Begin(false)
 	if err != nil {
 		return "", err
 	}
@@ -103,13 +108,11 @@ func (s *DiskSessionList) HasKey(key string) (username string, err error) {
 	if err != nil {
 		return "", err
 	}
-	item.update = time.Now()
 
-	v, err = diskEncode(item)
-	if err != nil {
-		return "", err
-	}
-	bucket.Put(bkey, v)
+	// Update in memeory to batch up for later.
+	s.Lock()
+	s.updates[key] = time.Now()
+	s.Unlock()
 
 	return item.username, nil
 }
@@ -197,6 +200,38 @@ func (s *DiskSessionList) ExpireBefore(update time.Time, create time.Time) (err 
 		return err
 	}
 	item := &diskSessionItem{}
+
+	// Update the update time before the expire time takes effect.
+	err = func() error {
+		s.Lock()
+		defer s.Unlock()
+		for skey, update := range s.updates {
+			// Ignore error, already checked before.
+			bkey, err := base64.StdEncoding.DecodeString(skey)
+			if err != nil {
+				return err
+			}
+			v := bucket.Get(bkey)
+			err = diskDecode(v, item)
+			if err != nil {
+				return err
+			}
+			item.update = update
+			v, err = diskEncode(item)
+			if err != nil {
+				return err
+			}
+			err = bucket.Put(bkey, v)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}()
+	if err != nil {
+		return err
+	}
+
 	keys := [][]byte{}
 	err = bucket.ForEach(func(k, v []byte) error {
 		err = diskDecode(v, item)

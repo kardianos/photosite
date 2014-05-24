@@ -73,6 +73,7 @@ func (auth *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func startExpire() {
+	// Do not make longer then one minute.
 	ticker := time.NewTicker(time.Minute)
 	for {
 		<-ticker.C
