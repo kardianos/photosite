@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Photo Site - {{.Username}}</title>
+	<title>{{.SiteName}} - {{.C.Username}}</title>
+	
+	<style>
+	.right {
+		float: right;	
+	}
+	</style>
 </head>
 <body>
-	<h1>{{.Username}}</h1>
+	<span class="right"><a href="/api/logout?_={{.Rand}}">logout</a></span>
+	<h1>{{.C.Username}}</h1>
 	<ul>
-		{{range .Groups}}
+		{{range .C.Groups}}
 		<li><a href="/u/{{.}}/">{{.}}</a></li>
 		{{else}}
 		<li>No Groups</li>

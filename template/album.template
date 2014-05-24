@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Photo Site - {{.Album}} Images</title>
+	<title>{{.SiteName}} - {{.Album}} Images</title>
 	
 	<style>
 		p.description {
 			display: inline-block;
 			max-width: 600px;
 		}
-		.item {
+		.right {
+			float: right;	
 		}
 	</style>
 	
 	<script type="text/javascript" src="/lib/masonry.pkgd.min.js"></script>
 </head>
 <body>
+	<span class="right"><a href="/api/logout?_={{.Rand}}">logout</a></span>
 	<a href="..">Back to group</a><br>
 	<h1>{{.Album}}</h1>
 	<h2>{{.Title}}</h2>

@@ -23,12 +23,23 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
-	"sync"
+	"time"
 
 	"bitbucket.org/kardianos/service/config"
 )
 
 // Input: www root, TLS certs.
+
+const (
+	siteName = "Photo Site"
+
+	cookieKeyName = "sk"
+	keyByteLength = 2048 / 8
+
+	secureConnection  = false
+	expireSessionTime = 2 * time.Hour
+	maxSessionTime    = 24 * time.Hour
+)
 
 var root = flag.String("root", "", "Application Root")
 
@@ -49,52 +60,6 @@ type UserList struct {
 	ByUsername map[string]*User
 }
 
-type AuthHandler struct {
-	Authorized http.Handler
-
-	sync.RWMutex
-	AuthorizedList *UserList
-}
-
-func (auth *AuthHandler) groups(username, password string) []string {
-	auth.RLock()
-	defer auth.RUnlock()
-
-	if auth.AuthorizedList == nil {
-		return nil
-	}
-
-	u, found := auth.AuthorizedList.ByUsername[username]
-	if !found {
-		return nil
-	}
-	if u.Username != username || u.Password != password {
-		return nil
-	}
-
-	return u.Groups
-}
-
-func (auth *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	u, p, tried := getAuth(r)
-	if !tried {
-		sendUnAuth(w, "Photo Site")
-		return
-	}
-	groups := auth.groups(u, p)
-	if len(groups) == 0 {
-		sendUnAuth(w, "Photo Site")
-		return
-	}
-
-	c := &Context{
-		ResponseWriter: w,
-		Username:       u,
-		Groups:         groups,
-	}
-	auth.Authorized.ServeHTTP(c, r)
-}
-
 type Context struct {
 	http.ResponseWriter
 
@@ -111,9 +76,14 @@ func (c *Context) InGroup(group string) bool {
 	return false
 }
 
+var auth *AuthHandler
+
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	auth := &AuthHandler{Authorized: setupRouter()}
+	auth = &AuthHandler{
+		Authorized:   setupAuthRouter(),
+		Unauthorized: setupUnauthRouter(),
+	}
 
 	usersFile := filepath.Join(*root, ".users")
 	sampleUsers := &UserList{

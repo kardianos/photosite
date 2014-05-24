@@ -14,5 +14,3 @@ func init() {
 		log.Fatalf("Failed to parse template: %v")
 	}
 }
-
-// var t = template.Must(template.New("name").Parse("html"))

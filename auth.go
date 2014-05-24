@@ -1,41 +1,140 @@
 package main
 
 import (
-	"encoding/base64"
-	"fmt"
+	"log"
 	"net/http"
-	"strings"
+	"path/filepath"
+	"sync"
+	"time"
 )
 
-func getAuth(r *http.Request) (username, password string, tried bool) {
-	a := r.Header.Get("Authorization")
-	if a == "" {
-		return
-	}
-	tried = true
+var sessions = NewSessionList("sessions.bolt")
 
-	basic := "Basic "
-	index := strings.Index(a, basic)
-	if index < 0 {
-		return
-	}
+type AuthHandler struct {
+	Authorized   http.Handler
+	Unauthorized http.Handler
 
-	upString, err := base64.StdEncoding.DecodeString(a[index+len(basic):])
-	if err != nil {
-		return
-	}
-	up := strings.SplitN(string(upString), ":", 2)
-	if len(up) != 2 {
-		return
-	}
-
-	username = up[0]
-	password = up[1]
-
-	return
+	sync.RWMutex
+	AuthorizedList *UserList
 }
-func sendUnAuth(w http.ResponseWriter, realm string) {
-	w.Header().Set("WWW-Authenticate", fmt.Sprintf("Basic realm=%q", realm))
-	w.WriteHeader(http.StatusUnauthorized)
-	w.Write([]byte("unauthorized"))
+
+func (auth *AuthHandler) isValid(username, password string) bool {
+	auth.RLock()
+	defer auth.RUnlock()
+
+	if auth.AuthorizedList == nil {
+		return false
+	}
+
+	u, found := auth.AuthorizedList.ByUsername[username]
+	if !found {
+		return false
+	}
+	if u.Username != username || u.Password != password {
+		return false
+	}
+
+	return true
+}
+func (auth *AuthHandler) groups(username string) []string {
+	auth.RLock()
+	defer auth.RUnlock()
+
+	if auth.AuthorizedList == nil {
+		return nil
+	}
+
+	u, found := auth.AuthorizedList.ByUsername[username]
+	if !found {
+		return nil
+	}
+
+	return u.Groups
+}
+
+func (auth *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/favicon.ico" {
+		http.ServeFile(w, r, filepath.Join(*root, "lib/favicon.ico"))
+		return
+	}
+	username, in := authCheck(r)
+	if !in {
+		auth.Unauthorized.ServeHTTP(w, r)
+		return
+	}
+	groups := auth.groups(username)
+
+	c := &Context{
+		ResponseWriter: w,
+		Username:       username,
+		Groups:         groups,
+	}
+	auth.Authorized.ServeHTTP(c, r)
+}
+
+func init() {
+	go startExpire()
+}
+
+func startExpire() {
+	ticker := time.NewTicker(time.Minute)
+	for {
+		<-ticker.C
+		now := time.Now()
+		sessions.ExpireBefore(now.Add(-expireSessionTime), now.Add(-maxSessionTime))
+	}
+}
+
+// Checks request for auth cookie. Validates auth cookie.
+func authCheck(r *http.Request) (string, bool) {
+	cookie, err := r.Cookie(cookieKeyName)
+	if err != nil || cookie == nil {
+		return "", false
+	}
+	username, err := sessions.HasKey(cookie.Value)
+	if err != nil {
+		log.Printf("Error checking session key: %v", err)
+		return "", false
+	}
+	if len(username) == 0 {
+		return "", false
+	}
+	return username, true
+}
+
+func authLogin(w http.ResponseWriter, r *http.Request) bool {
+	err := r.ParseForm()
+	if err != nil {
+		log.Printf("Error parsing form: %v", err)
+		return false
+	}
+	u := r.Form.Get("username")
+	p := r.Form.Get("password")
+	valid := auth.isValid(u, p)
+	if !valid {
+		return false
+	}
+	key, err := sessions.Insert(u)
+	if err != nil {
+		return false
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     cookieKeyName,
+		Value:    key,
+		Expires:  time.Now().Add(maxSessionTime),
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   secureConnection,
+	})
+	return true
+}
+
+func authLogout(w http.ResponseWriter, r *http.Request) error {
+	c := w.(*Context)
+	http.SetCookie(w, &http.Cookie{
+		Name:   cookieKeyName,
+		Path:   "/",
+		MaxAge: -1,
+	})
+	return sessions.Delete(c.Username)
 }

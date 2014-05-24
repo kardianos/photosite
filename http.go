@@ -2,27 +2,76 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-func setupRouter() *httprouter.Router {
+func setupAuthRouter() *httprouter.Router {
 	router := httprouter.New()
-	router.NotFound = notFound
+	router.NotFound = notFoundAuth
 
-	router.GET("/", rootHandler)
+	router.GET("/u/", rootHandler)
 	router.GET("/u/:group/", checkGroup(groupHandler))
 	router.GET("/u/:group/:album/", checkGroup(albumHandler))
 	router.GET("/u/:group/:album/:res/:image", checkGroup(imageHandler))
+
+	router.GET("/api/logout", logout)
 
 	router.ServeFiles("/lib/*filepath", http.Dir("lib"))
 
 	return router
 }
 
-func notFound(w http.ResponseWriter, r *http.Request) {
+func setupUnauthRouter() *httprouter.Router {
+	router := httprouter.New()
+	router.NotFound = notFoundUnauth
+
+	router.GET("/l/", loginPage)
+
+	router.POST("/api/login", doLogin)
+
+	return router
+}
+
+// Begin unauthenticated handlers.
+
+func loginPage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	err := allTemplates.ExecuteTemplate(w, "login.template", struct {
+		SiteName string
+	}{
+		SiteName: siteName,
+	})
+	if err != nil {
+		log.Printf("Error running template: %v", err)
+		return
+	}
+}
+func doLogin(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	ok := authLogin(w, r)
+	if ok {
+		http.Error(w, "/u/", 200)
+		return
+	}
+	http.Error(w, "Login Failed", 403)
+}
+func notFoundUnauth(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/l/", 302)
+}
+
+// End unauthenticated handlers.
+
+func notFoundAuth(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/u/", 302)
+}
+func logout(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	err := authLogout(w, r)
+	if err != nil {
+		log.Printf("Failed to logout: %v", err)
+		return
+	}
 	http.Redirect(w, r, "/", 302)
 }
 
@@ -31,7 +80,7 @@ func checkGroup(h httprouter.Handle) httprouter.Handle {
 		c := w.(*Context)
 		group := vars["group"]
 		if !c.InGroup(group) {
-			notFound(w, r)
+			notFoundAuth(w, r)
 			return
 		}
 		h(w, r, vars)
@@ -42,7 +91,15 @@ func checkGroup(h httprouter.Handle) httprouter.Handle {
 func rootHandler(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	// List authorized groups available from context.
 	c := w.(*Context)
-	err := allTemplates.ExecuteTemplate(w, "root.template", c)
+	err := allTemplates.ExecuteTemplate(w, "root.template", struct {
+		Rand     int64
+		SiteName string
+		C        *Context
+	}{
+		Rand:     rand.Int63(),
+		SiteName: siteName,
+		C:        c,
+	})
 	if err != nil {
 		log.Printf("Error running template: %v", err)
 		return
@@ -57,15 +114,19 @@ func groupHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 	albums, err := getAlbums(group)
 	if err != nil {
 		log.Printf("Error getting albums: %v", err)
-		notFound(w, r)
+		notFoundAuth(w, r)
 		return
 	}
 	err = allTemplates.ExecuteTemplate(w, "group.template", struct {
-		Group  string
-		Albums []string
+		Rand     int64
+		SiteName string
+		Group    string
+		Albums   []string
 	}{
-		Group:  group,
-		Albums: albums,
+		Rand:     rand.Int63(),
+		SiteName: siteName,
+		Group:    group,
+		Albums:   albums,
 	})
 	if err != nil {
 		log.Printf("Error running template: %v", err)
@@ -80,7 +141,7 @@ func albumHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 	desc, images, err := getImages(vars["group"], album)
 	if err != nil {
 		log.Printf("Error getting images: %v", err)
-		notFound(w, r)
+		notFoundAuth(w, r)
 		return
 	}
 	desc = strings.Trim(desc, " \n\r\t")
@@ -89,14 +150,18 @@ func albumHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 	desc = desc[titleAt+2:]
 
 	err = allTemplates.ExecuteTemplate(w, "album.template", struct {
+		Rand        int64
+		SiteName    string
 		Album       string
 		Title, Desc string
 		Images      []string
 	}{
-		Album:  album,
-		Images: images,
-		Title:  title,
-		Desc:   desc,
+		Rand:     rand.Int63(),
+		SiteName: siteName,
+		Album:    album,
+		Images:   images,
+		Title:    title,
+		Desc:     desc,
 	})
 	if err != nil {
 		log.Printf("Error running template: %v", err)
@@ -116,7 +181,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 	filename, err := getSingleImage(group, album, res, image)
 	if err != nil {
 		log.Printf("Error getting images: %v", err)
-		notFound(w, r)
+		notFoundAuth(w, r)
 		return
 	}
 	http.ServeFile(w, r, filename)

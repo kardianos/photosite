@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>{{.SiteName}}</title>
+	
+	<style>
+	body {
+		display: flex;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+	form {
+		flex: 0 1 300px;
+		margin: auto;
+	}
+	label>span {
+		display: inline-block;
+		width: 120px;
+	}
+	#result {
+		color: red;
+		font-size: 12px;
+		font-family: sans-serif;
+	}
+	</style>
+</head>
+<body>
+	<form>
+		<h1>{{.SiteName}} Login</h1>
+		<label><span>&nbsp;</span><span id="result"></span></label><br>
+		<label><span>Username</span><input type="text" name="username" autofocus /></label><br>
+		<label><span>Password</span><input type="password" name="password" /></label><br>
+		<label><span>&nbsp;</span><input type="button" value="Login"/></label>
+	</form>
+	
+	<script>
+		"use strict";
+		var login = document.querySelector("input[type='button']");
+		var username = document.querySelector("input[type='text']");
+		var password = document.querySelector("input[type='password']");
+		var result = document.querySelector("#result");
+		
+		login.addEventListener('click', ajaxLogin, false);
+		username.addEventListener('keypress', function(ev) {
+			if(ev.keyCode == 13) {
+				selectPassword();
+			}
+		}, false);
+		password.addEventListener('keypress', function(ev) {
+			if(ev.keyCode == 13) {
+				ajaxLogin();
+			}
+		}, false);
+		
+		function selectPassword() {
+			password.select();
+		}
+		
+		function ajaxLogin() {
+			var ajax = new XMLHttpRequest();
+			ajax.onreadystatechange = function () {
+				if(ajax.readyState === 4) {
+					if(ajax.status === 200) {
+						location.href = ajax.responseText;
+						return;
+					}
+					result.textContent = ajax.responseText;
+					selectPassword();
+				}
+			};
+			ajax.open("POST", "/api/login", true);
+			ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+			ajax.send("username=" + encodeURIComponent(username.value) + "&password=" + encodeURIComponent(password.value));
+		}
+	</script>
+</body>
+</html>

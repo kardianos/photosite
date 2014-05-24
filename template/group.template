@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Photo Site - {{.Group}} Albums</title>
+	<title>{{.SiteName}} - {{.Group}} Albums</title>
+	
+	<style>
+	.right {
+		float: right;	
+	}
+	</style>
 </head>
 <body>
+	<span class="right"><a href="/api/logout?_={{.Rand}}">logout</a></span>
 	<a href="/">Back to group list</a><br>
 	<h1>{{.Group}}</h1>
 	<ul>
