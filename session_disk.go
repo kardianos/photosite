@@ -212,6 +212,9 @@ func (s *DiskSessionList) ExpireBefore(update time.Time, create time.Time) (err 
 				return err
 			}
 			v := bucket.Get(bkey)
+			if v == nil {
+				continue
+			}
 			err = diskDecode(v, item)
 			if err != nil {
 				return err
