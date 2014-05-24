@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Photo Site - Groups</title>
+	<title>Photo Site - {{.Username}}</title>
 </head>
 <body>
-	<h1>Groups</h1>
+	<h1>{{.Username}}</h1>
 	<ul>
 		{{range .Groups}}
 		<li><a href="/u/{{.}}/">{{.}}</a></li>
