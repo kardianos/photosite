@@ -113,11 +113,12 @@ func (rt redirectToDomain) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type redirectToAuth struct {
-	auth http.Handler
+	domain string
+	auth   http.Handler
 }
 
 func (rt redirectToAuth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.Host, "www.") == false {
+	if strings.HasPrefix(r.Host, rt.domain) {
 		http.Redirect(w, r, "https://www."+r.Host, 301)
 		return
 	}
@@ -155,7 +156,7 @@ func httpInit(c *srv.Config) error {
 	if err != nil {
 		return err
 	}
-	err = listenSecure(tlsAddr, domain, redirectToAuth{auth})
+	err = listenSecure(tlsAddr, domain, redirectToAuth{domain: domain, auth: auth})
 	if err != nil {
 		return err
 	}
