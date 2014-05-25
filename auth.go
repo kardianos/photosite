@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"path/filepath"
 	"sync"
@@ -86,7 +85,7 @@ func (auth *AuthHandler) groups(username string) []string {
 
 func (auth *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/favicon.ico" {
-		http.ServeFile(w, r, filepath.Join(*root, "lib/favicon.ico"))
+		http.ServeFile(w, r, filepath.Join(root, "lib/favicon.ico"))
 		return
 	}
 	username, in := authCheck(r)
@@ -122,7 +121,7 @@ func authCheck(r *http.Request) (string, bool) {
 	}
 	username, err := sessions.HasKey(cookie.Value)
 	if err != nil {
-		log.Printf("Error checking session key: %v", err)
+		log.Error("Error checking session key: %v", err)
 		return "", false
 	}
 	if len(username) == 0 {
@@ -134,7 +133,7 @@ func authCheck(r *http.Request) (string, bool) {
 func authLogin(w http.ResponseWriter, r *http.Request) bool {
 	err := r.ParseForm()
 	if err != nil {
-		log.Printf("Error parsing form: %v", err)
+		log.Error("Error parsing form: %v", err)
 		return false
 	}
 	u := r.Form.Get("username")

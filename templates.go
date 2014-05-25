@@ -2,13 +2,10 @@ package main
 
 import (
 	"html/template"
-	"log"
 )
 
-func loadTemplates() {
+func loadTemplates() error {
 	var err error
 	allTemplates, err = template.ParseGlob("template/*.template")
-	if err != nil {
-		log.Fatalf("Failed to parse template: %v")
-	}
+	return err
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -45,7 +44,7 @@ func loginPage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 		SiteName: siteName,
 	})
 	if err != nil {
-		log.Printf("Error running template: %v", err)
+		log.Error("Error running template: %v", err)
 		return
 	}
 }
@@ -69,7 +68,7 @@ func notFoundAuth(w http.ResponseWriter, r *http.Request) {
 func logout(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	err := authLogout(w, r)
 	if err != nil {
-		log.Printf("Failed to logout: %v", err)
+		log.Error("Failed to logout: %v", err)
 		return
 	}
 	http.Redirect(w, r, "/", 302)
@@ -101,7 +100,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 		C:        c,
 	})
 	if err != nil {
-		log.Printf("Error running template: %v", err)
+		log.Error("Error running template: %v", err)
 		return
 	}
 }
@@ -113,7 +112,7 @@ func groupHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 	group := vars["group"]
 	albums, err := getAlbums(group)
 	if err != nil {
-		log.Printf("Error getting albums: %v", err)
+		log.Error("Error getting albums: %v", err)
 		notFoundAuth(w, r)
 		return
 	}
@@ -129,7 +128,7 @@ func groupHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 		Albums:   albums,
 	})
 	if err != nil {
-		log.Printf("Error running template: %v", err)
+		log.Error("Error running template: %v", err)
 		return
 	}
 }
@@ -140,7 +139,7 @@ func albumHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 	album := vars["album"]
 	desc, images, err := getImages(vars["group"], album)
 	if err != nil {
-		log.Printf("Error getting images: %v", err)
+		log.Error("Error getting images: %v", err)
 		notFoundAuth(w, r)
 		return
 	}
@@ -164,7 +163,7 @@ func albumHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 		Desc:     desc,
 	})
 	if err != nil {
-		log.Printf("Error running template: %v", err)
+		log.Error("Error running template: %v", err)
 		return
 	}
 }
@@ -180,7 +179,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 	)
 	filename, err := getSingleImage(group, album, res, image)
 	if err != nil {
-		log.Printf("Error getting images: %v", err)
+		log.Error("Error getting images: %v", err)
 		notFoundAuth(w, r)
 		return
 	}

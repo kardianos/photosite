@@ -13,7 +13,7 @@
 		bottom: 0;
 	}
 	form {
-		flex: 0 1 300px;
+		flex: 0 1 600px;
 		margin: auto;
 	}
 	label>span {
@@ -31,7 +31,7 @@
 	<form>
 		<h1>{{.SiteName}} Login</h1>
 		<label><span>&nbsp;</span><span id="result"></span></label><br>
-		<label><span>Username</span><input type="text" name="username" autofocus /></label><br>
+		<label><span>Username</span><input type="text" name="username" autofocus autocomplete="off" /></label><br>
 		<label><span>Password</span><input type="password" name="password" /></label><br>
 		<label><span>&nbsp;</span><input type="button" value="Login"/></label>
 	</form>

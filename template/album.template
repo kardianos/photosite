@@ -13,7 +13,10 @@
 		}
 	</style>
 	
+	<link rel="stylesheet" type="text/css" href="/lib/lightbox.min.css">
+	
 	<script type="text/javascript" src="/lib/masonry.pkgd.min.js"></script>
+	<script type="text/javascript" src="/lib/lightbox.min.js"></script>
 </head>
 <body>
 	<span class="right"><a href="/api/logout?_={{.Rand}}">logout</a></span>
@@ -25,7 +28,7 @@
 	</p>
 	<div id="container">
 		{{range .Images}}
-		<div class="item"><a href="1280/{{.}}"><img src="200/{{.}}"></a></div>
+		<div class="item"><img class="jslghtbx-thmb" src="200/{{.}}" data-jslghtbx="1280/{{.}}"></div>
 		{{else}}
 		<b>No Images</b>
 		{{end}}
@@ -37,6 +40,13 @@ window.onload = function() {
 	var msnry = new Masonry( container, {
 	  itemSelector: '.item',
 	  columnWidth: 50
+	});
+	
+	var lightbox = new Lightbox();
+	lightbox.load({
+		responsive: true,
+		hideOverflow: true,
+		closeOnClick: true,
 	});
 };
 	</script>

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"strings"
 )
 
@@ -50,11 +49,11 @@ func UserDecode(r io.Reader, v interface{}) error {
 			continue
 		}
 		if len(username) < minUsernameLength {
-			log.Printf("Username must at least %d letters", minUsernameLength)
+			log.Error("Username must at least %d letters", minUsernameLength)
 			continue
 		}
 		if len(password) < minPasswordLength {
-			log.Printf("Password must at least %d letters", minPasswordLength)
+			log.Error("Password must at least %d letters", minPasswordLength)
 			continue
 		}
 
