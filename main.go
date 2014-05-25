@@ -117,7 +117,6 @@ type redirectToAuth struct {
 }
 
 func (rt redirectToAuth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Info("Request URL: %#v", r.Host)
 	if strings.HasPrefix(r.Host, "www.") == false {
 		http.Redirect(w, r, "https://www."+r.Host, 301)
 		return
