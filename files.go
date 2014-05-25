@@ -11,11 +11,6 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-const (
-	cacheDir        = ".cache"
-	descriptionFile = "Description.txt"
-)
-
 func getAlbums(group string) ([]string, error) {
 	groupPath := filepath.Join(*root, group)
 	f, err := os.Open(groupPath)
@@ -65,8 +60,6 @@ func getImages(group, album string) (string, []string, error) {
 	return description, images, nil
 }
 
-var sizes = []int{200, 1280}
-
 var badImageSize = errors.New("Bad image size")
 
 func getSingleImage(group, album, res, image string) (string, error) {
@@ -97,7 +90,7 @@ func getSingleImage(group, album, res, image string) (string, error) {
 		if !os.IsNotExist(err) {
 			return "", err
 		}
-		// TODO: resize image, open cache image.
+		// Resize image, open cache image.
 		fullImagePath := filepath.Join(*root, group, album, image)
 		fullImage, err := imaging.Open(fullImagePath)
 		if err != nil {

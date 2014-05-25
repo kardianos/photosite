@@ -5,8 +5,6 @@ import (
 	"log"
 )
 
-var allTemplates *template.Template
-
 func loadTemplates() {
 	var err error
 	allTemplates, err = template.ParseGlob("template/*.template")

@@ -8,7 +8,39 @@ import (
 	"time"
 )
 
-var sessions Session
+var (
+	sessions Session
+
+	auth *AuthHandler
+)
+
+type User struct {
+	Username string
+	Password string
+
+	Groups []string
+}
+
+type UserList struct {
+	Order      []*User
+	ByUsername map[string]*User
+}
+
+type Context struct {
+	http.ResponseWriter
+
+	Username string
+	Groups   []string
+}
+
+func (c *Context) InGroup(group string) bool {
+	for _, g := range c.Groups {
+		if g == group {
+			return true
+		}
+	}
+	return false
+}
 
 type AuthHandler struct {
 	Authorized   http.Handler

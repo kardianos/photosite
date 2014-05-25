@@ -19,6 +19,7 @@ package main
 
 import (
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -39,64 +40,25 @@ const (
 	secureConnection  = false
 	expireSessionTime = 2 * time.Hour
 	maxSessionTime    = 24 * time.Hour
-)
 
-var root = flag.String("root", "", "Application Root")
-
-var (
 	minUsernameLength = 8
 	minPasswordLength = 6
+
+	usersFileName   = "users.txt"
+	sessionFileName = "sessions.bolt"
+
+	cacheDir        = ".cache"
+	descriptionFile = "Description.txt"
 )
 
-type User struct {
-	Username string
-	Password string
+var (
+	sizes = []int{200, 1280}
 
-	Groups []string
-}
+	allTemplates *template.Template
 
-type UserList struct {
-	Order      []*User
-	ByUsername map[string]*User
-}
+	root = flag.String("root", "", "Application Root")
 
-type Context struct {
-	http.ResponseWriter
-
-	Username string
-	Groups   []string
-}
-
-func (c *Context) InGroup(group string) bool {
-	for _, g := range c.Groups {
-		if g == group {
-			return true
-		}
-	}
-	return false
-}
-
-var auth *AuthHandler
-
-func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-	auth = &AuthHandler{
-		Authorized:   setupAuthRouter(),
-		Unauthorized: setupUnauthRouter(),
-	}
-	var err error
-
-	sessions, err = NewDiskSessionList("sessions.bolt")
-	if err != nil {
-		log.Fatalf("Failed to start disk sessions: %v", err)
-	}
-	defer sessions.Close()
-
-	go startExpire()
-	loadTemplates()
-
-	usersFile := filepath.Join(*root, ".users")
-	sampleUsers := &UserList{
+	sampleUsers = &UserList{
 		Order: []*User{
 			{
 				Username: "usernameA",
@@ -105,11 +67,40 @@ func main() {
 			},
 		},
 	}
-	watch, err := config.NewWatchConfig(usersFile, UserDecode, sampleUsers, UserEncode)
+
+	watch *config.WatchConfig
+)
+
+// TODO: Load setting from config file.
+// TODO: Run as service.
+// TODO: Add TLS server.
+// TODO: Add in-line large photo viewer.
+func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	defer stop()
+	start()
+}
+
+func start() {
+	auth = &AuthHandler{
+		Authorized:   setupAuthRouter(),
+		Unauthorized: setupUnauthRouter(),
+	}
+	var err error
+
+	sessions, err = NewDiskSessionList(filepath.Join(*root, sessionFileName))
+	if err != nil {
+		log.Fatalf("Failed to start disk sessions: %v", err)
+	}
+
+	go startExpire()
+	loadTemplates()
+
+	usersFile := filepath.Join(*root, usersFileName)
+	watch, err = config.NewWatchConfig(usersFile, UserDecode, sampleUsers, UserEncode)
 	if err != nil {
 		log.Fatalf("Failed to start watch: %s", err)
 	}
-	defer watch.Close()
 	go func() {
 		for {
 			select {
@@ -130,4 +121,13 @@ func main() {
 	watch.TriggerC()
 
 	log.Fatal(http.ListenAndServe(":9080", auth))
+}
+
+func stop() {
+	if watch != nil {
+		watch.Close()
+	}
+	if sessions != nil {
+		sessions.Close()
+	}
 }
