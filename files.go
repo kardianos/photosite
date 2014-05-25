@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -47,16 +48,18 @@ func getImages(group, album string) (string, []string, error) {
 			}
 			description = string(bb)
 		}
+		lname := strings.ToLower(name)
 
 		isImage := false
-		isImage = isImage || strings.HasSuffix(name, ".jpg")
-		isImage = isImage || strings.HasSuffix(name, ".jpeg")
-		isImage = isImage || strings.HasSuffix(name, ".png")
+		isImage = isImage || strings.HasSuffix(lname, ".jpg")
+		isImage = isImage || strings.HasSuffix(lname, ".jpeg")
+		isImage = isImage || strings.HasSuffix(lname, ".png")
 		if !isImage {
 			continue
 		}
 		images = append(images, name)
 	}
+	sort.StringSlice(images).Sort()
 	return description, images, nil
 }
 
