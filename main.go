@@ -101,9 +101,6 @@ func main() {
 		Init: httpInit,
 	}
 	sc.Run()
-
-	defer stop(nil)
-	start(nil)
 }
 
 type redirectToDomain string
