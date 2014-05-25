@@ -3,6 +3,7 @@ package main
 import (
 	"math/rand"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
@@ -19,7 +20,7 @@ func setupAuthRouter() *httprouter.Router {
 
 	router.GET("/api/logout", logout)
 
-	router.ServeFiles("/lib/*filepath", http.Dir("lib"))
+	router.ServeFiles("/lib/*filepath", http.Dir(filepath.Join(root, "lib")))
 
 	return router
 }
