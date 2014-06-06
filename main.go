@@ -25,7 +25,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"bitbucket.org/kardianos/service"
 	"bitbucket.org/kardianos/service/config"
@@ -35,13 +34,6 @@ import (
 const (
 	cookieKeyName = "sk"
 	keyByteLength = 2048 / 8
-
-	checkExpireTime   = time.Minute
-	expireSessionTime = 2 * time.Hour
-	maxSessionTime    = 24 * time.Hour
-
-	minUsernameLength = 8
-	minPasswordLength = 6
 
 	usersFileName   = "users.txt"
 	sessionFileName = "sessions.bolt"
