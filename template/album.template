@@ -11,11 +11,13 @@
 		.right {
 			float: right;	
 		}
+		div.item {
+			display: inline-block;
+		}
 	</style>
 	
 	<link rel="stylesheet" type="text/css" href="/lib/lightbox.min.css">
 	
-	<script type="text/javascript" src="/lib/masonry.pkgd.min.js"></script>
 	<script type="text/javascript" src="/lib/lightbox.min.js"></script>
 </head>
 <body>
@@ -35,20 +37,12 @@
 	</div>
 	
 	<script>
-window.onload = function() {
-	var container = document.querySelector('#container');
-	var msnry = new Masonry( container, {
-	  itemSelector: '.item',
-	  columnWidth: 50
-	});
-	
-	var lightbox = new Lightbox();
-	lightbox.load({
-		responsive: true,
-		hideOverflow: true,
-		closeOnClick: true,
-	});
-};
+var lightbox = new Lightbox();
+lightbox.load({
+	responsive: true,
+	hideOverflow: true,
+	closeOnClick: true,
+});
 	</script>
 </body>
 </html>
