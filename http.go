@@ -12,6 +12,7 @@ import (
 func setupAuthRouter() *httprouter.Router {
 	router := httprouter.New()
 	router.NotFound = notFoundAuth
+	router.PanicHandler = httpPanic
 
 	router.GET("/u/", rootHandler)
 	router.GET("/u/:group/", checkGroup(groupHandler))
@@ -28,12 +29,18 @@ func setupAuthRouter() *httprouter.Router {
 func setupUnauthRouter() *httprouter.Router {
 	router := httprouter.New()
 	router.NotFound = notFoundUnauth
+	router.PanicHandler = httpPanic
 
 	router.GET("/l/", loginPage)
 
 	router.POST("/api/login", doLogin)
 
 	return router
+}
+
+func httpPanic(w http.ResponseWriter, r *http.Request, err interface{}) {
+	log.Error("Panic in code: %v", err)
+	http.Error(w, "SITE ERROR", 500)
 }
 
 // Begin unauthenticated handlers.
@@ -146,8 +153,11 @@ func albumHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 	}
 	desc = strings.Trim(desc, " \n\r\t")
 	titleAt := strings.Index(desc, "\n\n")
-	title := desc[:titleAt]
-	desc = desc[titleAt+2:]
+	title := ""
+	if titleAt > 0 {
+		title = desc[:titleAt]
+		desc = desc[titleAt+2:]
+	}
 
 	err = allTemplates.ExecuteTemplate(w, "album.template", struct {
 		Rand        int64
