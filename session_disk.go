@@ -93,7 +93,7 @@ func (s *DiskSessionList) HasKey(key string) (username string, err error) {
 	if err != nil {
 		return "", err
 	}
-	defer tx.Commit()
+	defer tx.Rollback()
 
 	bucket := tx.Bucket(diskBucketName)
 	if bucket == nil {
