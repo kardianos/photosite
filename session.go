@@ -26,10 +26,10 @@ type MemorySessionList struct {
 	list map[string]*sessionItem
 }
 
-func NewMemorySessionList() Session {
+func NewMemorySessionList(path string) (Session, error) {
 	return &MemorySessionList{
 		list: make(map[string]*sessionItem, 10),
-	}
+	}, nil
 }
 
 func (s *MemorySessionList) HasKey(key string) (username string, err error) {

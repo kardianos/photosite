@@ -39,13 +39,15 @@ const (
 	domain   = "photosite.com"
 	root     = "/srv/photosite"
 
-	plainAddr = ":http"
-	tlsAddr   = ":https"
+	diskSession      = false
+	secureConnection = true
+	plainAddr        = ":http"
+	tlsAddr          = ":https"
 
 	cookieKeyName = "sk"
 	keyByteLength = 2048 / 8
 
-	secureConnection  = false
+	checkExpireTime   = time.Minute
 	expireSessionTime = 2 * time.Hour
 	maxSessionTime    = 24 * time.Hour
 
@@ -137,9 +139,13 @@ func httpInit(c *srv.Config) error {
 		Unauthorized: setupUnauthRouter(),
 	}
 
-	sessions, err = NewDiskSessionList(filepath.Join(root, sessionFileName))
+	newSession := NewMemorySessionList
+	if diskSession {
+		newSession = NewDiskSessionList
+	}
+	sessions, err = newSession(filepath.Join(root, sessionFileName))
 	if err != nil {
-		log.Error("Failed to start disk sessions: %v", err)
+		log.Error("Failed to start sessions: %v", err)
 		return err
 	}
 
@@ -149,13 +155,19 @@ func httpInit(c *srv.Config) error {
 		log.Error("Failed to start userWatch: %s", err)
 		return err
 	}
-	err = listen(plainAddr, redirectToDomain(domain))
+	var plainHandler http.Handler = auth
+	if secureConnection {
+		plainHandler = redirectToDomain(domain)
+	}
+	err = listen(plainAddr, plainHandler)
 	if err != nil {
 		return err
 	}
-	err = listenSecure(tlsAddr, domain, redirectToAuth{domain: domain, auth: auth})
-	if err != nil {
-		return err
+	if secureConnection {
+		err = listenSecure(tlsAddr, domain, redirectToAuth{domain: domain, auth: auth})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -184,10 +196,12 @@ func start(c *srv.Config) {
 	}()
 	userWatch.TriggerC()
 
-	go func() {
-		err := tlsServer.Serve(tlsListen)
-		log.Error("Failed to serve: %v", err)
-	}()
+	if secureConnection {
+		go func() {
+			err := tlsServer.Serve(tlsListen)
+			log.Error("Failed to serve: %v", err)
+		}()
+	}
 	err = plainServer.Serve(plainListen)
 	log.Error("Failed to serve: %v", err)
 }
