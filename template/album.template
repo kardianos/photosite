@@ -16,9 +16,10 @@
 		}
 	</style>
 	
-	<link rel="stylesheet" type="text/css" href="/lib/lightbox.min.css">
+	<link rel="stylesheet" type="text/css" href="/lib/colorbox.css">
 	
-	<script type="text/javascript" src="/lib/lightbox.min.js"></script>
+	<script type="text/javascript" src="/lib/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="/lib/jquery.colorbox-min.js"></script>
 </head>
 <body>
 	<span class="right"><a href="/api/logout?_={{.Rand}}">logout</a></span>
@@ -30,18 +31,20 @@
 	</p>
 	<div id="container">
 		{{range .Images}}
-		<div class="item"><img class="jslghtbx-thmb" src="200/{{.}}" data-jslghtbx="1280/{{.}}"></div>
+		<div class="item"><a class="album" href="1280/{{.}}"><img src="200/{{.}}"></a></div>
 		{{else}}
 		<b>No Images</b>
 		{{end}}
 	</div>
 	
 	<script>
-var lightbox = new Lightbox();
-lightbox.load({
-	responsive: true,
-	hideOverflow: true,
-	closeOnClick: true,
+$(".album").colorbox({
+	rel:'album',
+	transition:"none",
+	slideshow: true,
+	slideshowAuto: false,
+	maxWidth: "95%",
+	maxHeight: "95%"
 });
 	</script>
 </body>
