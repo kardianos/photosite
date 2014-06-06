@@ -7,10 +7,34 @@
 	.right {
 		float: right;	
 	}
+	li {
+		list-style: none;
+	}
+	li>a {
+		display: inline-block;
+		width: 80%;
+		height: 50px;
+		line-height: 50px;
+		margin: 10px;
+		background: lightgray;
+		color: black;
+		padding-left: 10px;
+		border-radius: 5px;
+		border: 2px solid black;
+	}
+	a.nav {
+		margin: 10px;
+		padding: 10px;
+		background: lightgray;
+		border-radius: 5px;
+		border: 2px solid black;
+		display: inline-block;
+		color: black;
+	}
 	</style>
 </head>
 <body>
-	<span class="right"><a href="/api/logout?_={{.Rand}}">logout</a></span>
+	<span class="right"><a class="nav" href="/api/logout?_={{.Rand}}">logout</a></span>
 	<h1>{{.C.Username}}</h1>
 	<ul>
 		{{range .C.Groups}}
