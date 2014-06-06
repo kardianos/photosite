@@ -16,6 +16,9 @@
 		flex: 0 1 600px;
 		margin: auto;
 	}
+	label.input {
+		border-bottom: 1px solid lightgray;	
+	}
 	label>span {
 		display: inline-block;
 		width: 120px;
@@ -25,14 +28,20 @@
 		font-size: 12px;
 		font-family: sans-serif;
 	}
+	input {
+		height: 30px;
+		border-radius: 5px;
+		border: 1px solid black;
+		margin: 10px;
+	}
 	</style>
 </head>
 <body>
 	<form>
 		<h1>{{.SiteName}} Login</h1>
 		<label><span>&nbsp;</span><span id="result"></span></label><br>
-		<label><span>Username</span><input type="text" name="username" autofocus autocomplete="off" /></label><br>
-		<label><span>Password</span><input type="password" name="password" /></label><br>
+		<label class="input"><span>Username</span><input type="text" name="username" autofocus autocomplete="off" /></label><br>
+		<label class="input"><span>Password</span><input type="password" name="password" /></label><br>
 		<label><span>&nbsp;</span><input type="button" value="Login"/></label>
 	</form>
 	
