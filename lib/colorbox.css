@@ -36,7 +36,14 @@
         /* avoid outlines on :active (mouseclick), but preserve outlines on :focus (tabbed navigating) */
         #cboxPrevious:active, #cboxNext:active, #cboxSlideshow:active, #cboxClose:active {outline:0;}
         
-        #cboxSlideshow{position:absolute; top:-20px; right:90px; color:#fff;}
+        #cboxSlideshow{
+			position: absolute;
+			top: -20px;
+			left: 20px;
+			color: #fff;
+			padding: 8px;
+			border-radius: 10px;
+		}
         #cboxPrevious{position:absolute; top:50%; left:5px; margin-top:-32px; background:url(images/controls.png) no-repeat top left; width:28px; height:65px; text-indent:-9999px;}
         #cboxPrevious:hover{background-position:bottom left;}
         #cboxNext{position:absolute; top:50%; right:5px; margin-top:-32px; background:url(images/controls.png) no-repeat top right; width:28px; height:65px; text-indent:-9999px;}
