@@ -32,18 +32,7 @@ import (
 	srv "bitbucket.org/kardianos/service/stdservice"
 )
 
-// Input: www root, TLS certs.
-
 const (
-	siteName = "Photo Site"
-	domain   = "photosite.com"
-	root     = "/srv/photosite"
-
-	diskSession      = false
-	secureConnection = true
-	plainAddr        = ":http"
-	tlsAddr          = ":https"
-
 	cookieKeyName = "sk"
 	keyByteLength = 2048 / 8
 
