@@ -35,7 +35,7 @@
 </head>
 <body>
 	<span class="right"><a class="nav" href="/api/logout?_={{.Rand}}">logout</a></span>
-	<a class="nav" href="/">Back to group list</a><br>
+	{{if .ManyGroup}}<a class="nav" href="/">Back to group list</a>{{end}}<br>
 	<h1>{{.Group}}</h1>
 	<ul>
 		{{range .Albums}}

@@ -38,9 +38,12 @@ func getImages(group, album string) (string, []string, error) {
 	if err != nil {
 		return "", nil, err
 	}
+	var images []string
 	sort.Sort(sortFileInfo(files))
 	description := ""
-	images := make([]string, 0, len(files)-1)
+	if len(files) != 0 {
+		images = make([]string, 0, len(files)-1)
+	}
 	for _, fi := range files {
 		if fi.IsDir() {
 			continue
