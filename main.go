@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"bitbucket.org/kardianos/service"
 	"bitbucket.org/kardianos/service/config"
@@ -159,8 +160,11 @@ func start(c *srv.Config) {
 	go startExpire()
 
 	go func() {
+		ticker := time.NewTicker(reloadUserTime)
 		for {
 			select {
+			case <-ticker.C:
+				userWatch.TriggerC()
 			case <-userWatch.C:
 				userList := &UserList{}
 				err := userWatch.Load(userList)
