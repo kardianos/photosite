@@ -3,6 +3,7 @@ package main
 import (
 	"math/rand"
 	"net/http"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -98,6 +99,10 @@ func checkGroup(h httprouter.Handle) httprouter.Handle {
 func rootHandler(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	// List authorized groups available from context.
 	c := w.(*Context)
+	if len(c.Groups) == 1 {
+		http.Redirect(w, r, path.Join("/u/", c.Groups[0]), 302)
+		return
+	}
 	err := allTemplates.ExecuteTemplate(w, "root.template", struct {
 		Rand     int64
 		SiteName string
@@ -118,6 +123,7 @@ func groupHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 	// List albums in groups (list folders in group that don't start with a ".").
 	// Fetch list of folders in group.
 	group := vars["group"]
+	c := w.(*Context)
 	albums, err := getAlbums(group)
 	if err != nil {
 		log.Error("Error getting albums: %v", err)
@@ -129,11 +135,15 @@ func groupHandler(w http.ResponseWriter, r *http.Request, vars map[string]string
 		SiteName string
 		Group    string
 		Albums   []string
+
+		ManyGroup bool
 	}{
 		Rand:     rand.Int63(),
 		SiteName: siteName,
 		Group:    group,
 		Albums:   albums,
+
+		ManyGroup: (len(c.Groups) != 1),
 	})
 	if err != nil {
 		log.Error("Error running template: %v", err)
