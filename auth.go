@@ -158,11 +158,16 @@ func authLogin(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func authLogout(w http.ResponseWriter, r *http.Request) error {
-	c := w.(*Context)
+	cookie, err := r.Cookie(cookieKeyName)
+	if err != nil || cookie == nil {
+		return err
+	}
 	http.SetCookie(w, &http.Cookie{
 		Name:   cookieKeyName,
 		Path:   "/",
 		MaxAge: -1,
 	})
-	return sessions.Delete(c.Username)
+	// c := w.(*Context)
+	// return sessions.Delete(c.Username)
+	return sessions.DeleteKey(cookie.Value)
 }

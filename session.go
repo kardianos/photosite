@@ -11,6 +11,7 @@ type Session interface {
 	HasKey(key string) (username string, err error)
 	Insert(username string) (key string, err error)
 	Delete(username string) (err error)
+	DeleteKey(key string) (err error)
 	ExpireBefore(update time.Time, create time.Time) (err error)
 	Close() error
 }
@@ -78,6 +79,14 @@ func (s *MemorySessionList) Delete(username string) (err error) {
 	for _, k := range keys {
 		delete(s.list, k)
 	}
+
+	return nil
+}
+func (s *MemorySessionList) DeleteKey(key string) (err error) {
+	s.Lock()
+	defer s.Unlock()
+
+	delete(s.list, key)
 
 	return nil
 }

@@ -188,6 +188,25 @@ func (s *DiskSessionList) Delete(username string) (err error) {
 
 	return nil
 }
+func (s *DiskSessionList) DeleteKey(key string) (err error) {
+	tx, err := s.db.Begin(true)
+	if err != nil {
+		return err
+	}
+	defer tx.Commit()
+
+	bucket := tx.Bucket(diskBucketName)
+	if bucket == nil {
+		return err
+	}
+	bkey, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		return err
+	}
+	bucket.Delete(bkey)
+
+	return nil
+}
 func (s *DiskSessionList) ExpireBefore(update time.Time, create time.Time) (err error) {
 	tx, err := s.db.Begin(true)
 	if err != nil {
