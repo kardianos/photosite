@@ -19,6 +19,7 @@ const (
 	checkExpireTime   = time.Minute
 	expireSessionTime = 2 * time.Hour
 	maxSessionTime    = 24 * time.Hour
+	reloadUserTime    = time.Minute
 
 	minUsernameLength = 8
 	minPasswordLength = 6
