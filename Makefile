@@ -18,3 +18,6 @@ deploy: prod
 	cp -R ./template $(Final)/
 	sudo $(Final)/$(Exec) start
 
+restart:
+	sudo $(Final)/$(Exec) stop
+	sudo $(Final)/$(Exec) start

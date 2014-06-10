@@ -1,4 +1,4 @@
-package main
+package session
 
 import (
 	"crypto/rand"
@@ -23,13 +23,15 @@ type sessionItem struct {
 }
 
 type MemorySessionList struct {
+	keyLength int
 	sync.Mutex
 	list map[string]*sessionItem
 }
 
-func NewMemorySessionList(path string) (Session, error) {
+func NewMemorySessionList(path string, keyLength int) (Session, error) {
 	return &MemorySessionList{
-		list: make(map[string]*sessionItem, 10),
+		keyLength: keyLength,
+		list:      make(map[string]*sessionItem, 10),
 	}, nil
 }
 
@@ -49,7 +51,7 @@ func (s *MemorySessionList) Insert(username string) (key string, err error) {
 	s.Lock()
 	defer s.Unlock()
 
-	b := make([]byte, keyByteLength)
+	b := make([]byte, s.keyLength)
 	_, err = rand.Read(b)
 	if err != nil {
 		return "", err

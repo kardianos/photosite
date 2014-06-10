@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"bitbucket.org/kardianos/photosite/session"
 	"bitbucket.org/kardianos/service"
 	"bitbucket.org/kardianos/service/config"
 	srv "bitbucket.org/kardianos/service/stdservice"
@@ -121,11 +122,11 @@ func httpInit(c *srv.Config) error {
 		Unauthorized: setupUnauthRouter(),
 	}
 
-	newSession := NewMemorySessionList
+	newSession := session.NewMemorySessionList
 	if diskSession {
-		newSession = NewDiskSessionList
+		newSession = session.NewDiskSessionList
 	}
-	sessions, err = newSession(filepath.Join(root, sessionFileName))
+	sessions, err = newSession(filepath.Join(root, sessionFileName), keyByteLength)
 	if err != nil {
 		log.Error("Failed to start sessions: %v", err)
 		return err

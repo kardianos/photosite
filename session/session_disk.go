@@ -1,4 +1,4 @@
-package main
+package session
 
 import (
 	"crypto/rand"
@@ -24,6 +24,8 @@ func (i *diskSessionItem) String() string {
 }
 
 type DiskSessionList struct {
+	keyLength int
+
 	db *bolt.DB
 
 	sync.Mutex
@@ -66,7 +68,7 @@ func diskDecode(b []byte, item *diskSessionItem) (err error) {
 	return nil
 }
 
-func NewDiskSessionList(persistPath string) (Session, error) {
+func NewDiskSessionList(persistPath string, keyLength int) (Session, error) {
 	db, err := bolt.Open(persistPath, 0600)
 	if err != nil {
 		return nil, err
@@ -79,8 +81,9 @@ func NewDiskSessionList(persistPath string) (Session, error) {
 		return nil, err
 	}
 	return &DiskSessionList{
-		db:      db,
-		updates: make(map[string]time.Time, 10),
+		keyLength: keyLength,
+		db:        db,
+		updates:   make(map[string]time.Time, 10),
 	}, nil
 }
 
@@ -128,7 +131,7 @@ func (s *DiskSessionList) Insert(username string) (skey string, err error) {
 		return "", nil
 	}
 
-	key := make([]byte, keyByteLength)
+	key := make([]byte, s.keyLength)
 	_, err = rand.Read(key)
 	if err != nil {
 		return "", err

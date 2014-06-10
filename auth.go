@@ -5,10 +5,12 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"bitbucket.org/kardianos/photosite/session"
 )
 
 var (
-	sessions Session
+	sessions session.Session
 
 	auth *AuthHandler
 )
