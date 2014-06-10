@@ -19,9 +19,11 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"html/template"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -37,8 +39,11 @@ const (
 	cookieKeyName = "sk"
 	keyByteLength = 2048 / 8
 
+	groupsFolder    = "groups"
 	usersFileName   = "users.txt"
 	sessionFileName = "sessions.bolt"
+
+	sessionLengthLogName = "sessionLength.log"
 
 	cacheDir        = ".cache"
 	descriptionFile = "Description.txt"
@@ -126,11 +131,31 @@ func httpInit(c *srv.Config) error {
 	if diskSession {
 		newSession = session.NewDiskSessionList
 	}
-	sessions, err = newSession(filepath.Join(root, sessionFileName), keyByteLength)
+	sessionLength := make(chan session.Length, 100)
+	sessions, err = newSession(filepath.Join(root, sessionFileName), keyByteLength, sessionLength)
 	if err != nil {
 		log.Error("Failed to start sessions: %v", err)
 		return err
 	}
+	go func() {
+		filename := filepath.Join(root, sessionLengthLogName)
+		var formatString = `"%s","%s","%s"` + "\n"
+		for {
+			select {
+			case length := <-sessionLength:
+				file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+				if err != nil {
+					log.Error("Failed to open session length log: %v", err)
+					continue
+				}
+				_, err = fmt.Fprintf(file, formatString, length.Start, length.Username, length.Duration.String())
+				file.Close()
+				if err != nil {
+					log.Error("Failed to write to session length log: %v", err)
+				}
+			}
+		}
+	}()
 
 	usersFile := filepath.Join(root, usersFileName)
 	userWatch, err = config.NewWatchConfig(usersFile, UserDecode, sampleUsers, UserEncode)

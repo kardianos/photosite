@@ -25,6 +25,7 @@ func (i *diskSessionItem) String() string {
 
 type DiskSessionList struct {
 	keyLength int
+	length    chan<- Length
 
 	db *bolt.DB
 
@@ -68,7 +69,7 @@ func diskDecode(b []byte, item *diskSessionItem) (err error) {
 	return nil
 }
 
-func NewDiskSessionList(persistPath string, keyLength int) (Session, error) {
+func NewDiskSessionList(persistPath string, keyLength int, length chan<- Length) (Session, error) {
 	db, err := bolt.Open(persistPath, 0600)
 	if err != nil {
 		return nil, err
@@ -82,9 +83,20 @@ func NewDiskSessionList(persistPath string, keyLength int) (Session, error) {
 	}
 	return &DiskSessionList{
 		keyLength: keyLength,
+		length:    length,
 		db:        db,
 		updates:   make(map[string]time.Time, 10),
 	}, nil
+}
+func (s *DiskSessionList) sendLength(item *diskSessionItem) {
+	if s.length == nil {
+		return
+	}
+	s.length <- Length{
+		Username: item.username,
+		Start:    item.create,
+		Duration: item.update.Sub(item.create),
+	}
 }
 
 func (s *DiskSessionList) HasKey(key string) (username string, err error) {
@@ -175,6 +187,7 @@ func (s *DiskSessionList) Delete(username string) (err error) {
 			return err
 		}
 		if item.username == username {
+			s.sendLength(item)
 			keys = append(keys, k)
 		}
 		return nil
@@ -206,6 +219,15 @@ func (s *DiskSessionList) DeleteKey(key string) (err error) {
 	if err != nil {
 		return err
 	}
+	bb := bucket.Get(bkey)
+	if bb != nil {
+		item := &diskSessionItem{}
+		err = diskDecode(bb, item)
+		if err == nil {
+			s.sendLength(item)
+		}
+	}
+
 	bucket.Delete(bkey)
 
 	return nil
@@ -264,6 +286,7 @@ func (s *DiskSessionList) ExpireBefore(update time.Time, create time.Time) (err 
 			return err
 		}
 		if item.update.Before(update) || item.create.Before(create) {
+			s.sendLength(item)
 			keys = append(keys, k)
 		}
 		return nil
