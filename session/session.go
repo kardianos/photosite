@@ -16,6 +16,12 @@ type Session interface {
 	Close() error
 }
 
+type Length struct {
+	Username string
+	Start    time.Time
+	Duration time.Duration
+}
+
 type sessionItem struct {
 	username string
 	update   time.Time
@@ -24,15 +30,26 @@ type sessionItem struct {
 
 type MemorySessionList struct {
 	keyLength int
+	length    chan<- Length
 	sync.Mutex
 	list map[string]*sessionItem
 }
 
-func NewMemorySessionList(path string, keyLength int) (Session, error) {
+func NewMemorySessionList(path string, keyLength int, length chan<- Length) (Session, error) {
 	return &MemorySessionList{
 		keyLength: keyLength,
 		list:      make(map[string]*sessionItem, 10),
 	}, nil
+}
+func (s *MemorySessionList) sendLength(item *sessionItem) {
+	if s.length == nil {
+		return
+	}
+	s.length <- Length{
+		Username: item.username,
+		Start:    item.create,
+		Duration: item.update.Sub(item.create),
+	}
 }
 
 func (s *MemorySessionList) HasKey(key string) (username string, err error) {
@@ -75,6 +92,7 @@ func (s *MemorySessionList) Delete(username string) (err error) {
 	keys := []string{}
 	for k, item := range s.list {
 		if item.username == username {
+			s.sendLength(item)
 			keys = append(keys, k)
 		}
 	}
@@ -88,7 +106,10 @@ func (s *MemorySessionList) DeleteKey(key string) (err error) {
 	s.Lock()
 	defer s.Unlock()
 
-	delete(s.list, key)
+	if item, found := s.list[key]; found {
+		s.sendLength(item)
+		delete(s.list, key)
+	}
 
 	return nil
 }
@@ -99,6 +120,7 @@ func (s *MemorySessionList) ExpireBefore(update time.Time, create time.Time) (er
 	keys := []string{}
 	for k, item := range s.list {
 		if item.update.Before(update) || item.create.Before(create) {
+			s.sendLength(item)
 			keys = append(keys, k)
 		}
 	}

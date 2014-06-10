@@ -14,7 +14,7 @@ import (
 )
 
 func getAlbums(group string) ([]string, error) {
-	groupPath := filepath.Join(root, group)
+	groupPath := filepath.Join(root, groupsFolder, group)
 	f, err := os.Open(groupPath)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func (s sortFileInfo) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s sortFileInfo) Less(i, j int) bool { return s[i].ModTime().Before(s[j].ModTime()) }
 
 func getImages(group, album string) (string, []string, error) {
-	albumPath := filepath.Join(root, group, album)
+	albumPath := filepath.Join(root, groupsFolder, group, album)
 	f, err := os.Open(albumPath)
 	if err != nil {
 		return "", nil, err
@@ -94,18 +94,18 @@ func getSingleImage(group, album, res, image string) (string, error) {
 
 	ext := filepath.Ext(image)
 	cacheImageName := image[:len(image)-len(ext)] + "@" + res + ext
-	err = os.MkdirAll(filepath.Join(root, group, album, cacheDir), 0777)
+	err = os.MkdirAll(filepath.Join(root, groupsFolder, group, album, cacheDir), 0777)
 	if err != nil {
 		return "", err
 	}
-	cachePath := filepath.Join(root, group, album, cacheDir, cacheImageName)
+	cachePath := filepath.Join(root, groupsFolder, group, album, cacheDir, cacheImageName)
 	cacheImage, err := os.Open(cachePath)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return "", err
 		}
 		// Resize image, open cache image.
-		fullImagePath := filepath.Join(root, group, album, image)
+		fullImagePath := filepath.Join(root, groupsFolder, group, album, image)
 		f, err := os.Open(fullImagePath)
 		if err != nil {
 			return "", err
